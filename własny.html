@@ -16,7 +16,7 @@
 	//Variables
 	let rocket, state;
 	var bullets = [];
-	var maxV = 5;
+	var maxV = 15;
 	//Aliases
 	let Application = PIXI.Application,
 		loader = PIXI.loader,
@@ -181,8 +181,11 @@ function moveObject(object){
 				vy = object.velocity * ((object.wasRotation / 5) * 0.0555555555);
 				break;
 		}
-		object.x += vx;
+		if(object.x + vx > 0 & object.x + vx < 1280)
+			object.x += vx;
+		if(object.y + vy > 0 & object.y + vy < 725)
 		object.y += vy;
+
 }
 //The 'changeDirection' helper functions, direction equal +1 = rotation right, -1 left, return current value
 function changeDirection(value, direction) {
