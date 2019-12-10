@@ -1,0 +1,246 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Treasure hunter</title>
+<body>
+<script src="pixi/pixi.min.js"></script>
+<script>
+//Create global variables, aliases, enums
+	//Enums
+	const Direction = Object.freeze({
+		'N':0,
+		'E':1,
+		'S':2,
+		'W':3,
+	})
+	
+	//Variables
+	let rocket, state;
+	var bullets = [];
+	var maxV = 5;
+	//Aliases
+	let Application = PIXI.Application,
+		loader = PIXI.loader,
+		resources = PIXI.loader.resources,
+		Sprite = PIXI.Sprite;
+
+//Create a Pixi Application
+	let app = new Application({ 
+		width: 1280, 
+		height: 725,                       
+		antialias: true, 
+		transparent: false, 
+		resolution: 1
+	  }
+	);
+
+	//Add the canvas that Pixi automatically created for you to the HTML document
+	document.body.appendChild(app.view);
+
+	//load an image and run the `setup` function when it's done
+	loader
+	  .add(["images/rocket.png", "images/blob.png", "images/bullet.png"])
+	  .load(setup);
+
+	//This `setup` function will run when the image has loaded
+	function setup() {
+	
+		//Create the `rocket` object 
+		rocket = new Sprite(resources["images/rocket.png"].texture);
+		rocket.y = 128; 
+		rocket.x = 128; 
+		rocket.velocity = 0;
+		rocket.wasRotation = 0;
+		rocket.rotation = -Math.PI / 2;
+		rocket.pivot.x = 32;
+		rocket.pivot.y = 32;
+		rocket.direction = Direction.N;
+		//Create the `blob` sprite 
+		blob = new Sprite(resources["images/blob.png"].texture);
+		blob.x = 400;
+		blob.y = 350;
+		app.stage.addChild(rocket);
+		app.stage.addChild(blob);
+
+		//Capture the keyboard arrow keys
+		let left = keyboard("ArrowLeft"),
+		up = keyboard("ArrowUp"),
+		right = keyboard("ArrowRight"),
+		down = keyboard("ArrowDown"),
+		space = keyboard("+");
+
+		//Left
+		left.press = () => {
+			rocket.twist = -1;
+		};
+		left.release = () => {
+			if(rocket.twist == -1)
+				rocket.twist = 0;
+		};
+		//Right
+		right.press = () => {
+			rocket.twist = 1;
+		};
+		right.release = () => {
+			if(rocket.twist == 1)
+				rocket.twist = 0;
+		};
+		//Up
+		up.press = () => {
+			rocket.velocity = -1 * maxV;
+		};
+		up.release = () => {
+			rocket.velocity = 0;
+		};
+		//Space
+		space.press = () => {
+			shoot(rocket);
+		};
+		//Down
+		down.press = () => {
+			rocket.velocity = maxV;
+		};
+		down.release = () => {
+			rocket.velocity = 0;
+		};
+
+		//Set the game state
+		state = play;
+
+		//Start the game loop
+		app.ticker.add(delta => gameLoop(delta));
+	}
+
+	function gameLoop(delta){
+	  
+	  //update the current game state:
+	  state(delta);
+	}
+	//PLAY FUNCTION its main loop function
+	function play(delta) {
+		moveObject(rocket);
+		for(var i = 0; i < bullets.length; i++){
+			moveObject(bullets[i]);
+			if(bullets[i].x > 1280 | bullets[i].x < 0 | bullets[i].y > 725 | bullets[i].y < 0){
+				app.stage.removeChild(bullets[i]);
+				bullets.splice(i, 1);
+			}
+		}
+	}
+	
+//The game's helper functions:
+//The 'shoot' helper functions
+function shoot(shooter){
+		bullet = new Sprite(resources["images/bullet.png"].texture);
+		bullet.x = shooter.x;
+		bullet.y = shooter.y;
+		bullet.wasRotation = shooter.wasRotation;
+		bullet.rotation = shooter.rotation;
+		bullet.velocity = -1 * maxV;
+		bullet.direction = shooter.direction;
+		bullets.push(bullet);
+		app.stage.addChild(bullet);
+}
+//The 'moveRocket' helper functions
+function moveObject(object){
+		if(object.twist < 0){
+			object.rotation += - Math.PI / 36;
+			object.wasRotation -= 5;
+
+		}else if(object.twist > 0){
+			object.rotation += Math.PI / 36;
+			object.wasRotation += 5;
+			
+		}
+		if(object.wasRotation == 90){
+			object.direction = changeDirection(object.direction, 1)
+			object.wasRotation = 0;
+			
+		}
+		if(object.wasRotation == -90){
+			object.direction = changeDirection(object.direction, -1)
+			object.wasRotation = 0;
+			
+		}
+		var vx = 0;
+		var vy = 0;
+		switch(object.direction){
+			case Direction.N:
+				vx = object.velocity * -1 * ((object.wasRotation / 5) * 0.0555555555);
+				vy = object.velocity * (1 - Math.abs((object.wasRotation / 5) * 0.0555555555));
+				break;
+			case Direction.E:
+				vx = object.velocity * -1 * (1 - Math.abs((object.wasRotation / 5) * 0.0555555555));
+				vy = object.velocity * -1 * ((object.wasRotation / 5) * 0.0555555555);
+				break;
+			case Direction.S:
+				vx = object.velocity * ((object.wasRotation / 5) * 0.0555555555);
+				vy = object.velocity * -1 * (1 - Math.abs((object.wasRotation / 5) * 0.0555555555));
+				break;
+			case Direction.W:
+				vx = object.velocity * (1 - Math.abs((object.wasRotation / 5) * 0.0555555555));
+				vy = object.velocity * ((object.wasRotation / 5) * 0.0555555555);
+				break;
+		}
+		object.x += vx;
+		object.y += vy;
+}
+//The 'changeDirection' helper functions, direction equal +1 = rotation right, -1 left, return current value
+function changeDirection(value, direction) {
+	if(direction == -1 & value == 0)
+		return 3;
+	else if(value == 3 & direction == 1)
+			return 0;
+		else
+			return value + direction;
+}
+
+//The 'keyboard' helper functions:
+	function keyboard(value) {
+	  let key = {};
+	  key.value = value;
+	  key.isDown = false;
+	  key.isUp = true;
+	  key.press = undefined;
+	  key.release = undefined;
+	  //The `downHandler`
+	  key.downHandler = event => {
+		if (event.key === key.value) {
+		  if (key.isUp && key.press) key.press();
+		  key.isDown = true;
+		  key.isUp = false;
+		  event.preventDefault();
+		}
+	  };
+
+	  //The `upHandler`
+	  key.upHandler = event => {
+		if (event.key === key.value) {
+		  if (key.isDown && key.release) key.release();
+		  key.isDown = false;
+		  key.isUp = true;
+		  event.preventDefault();
+		}
+	  };
+
+	  //Attach event listeners
+	  const downListener = key.downHandler.bind(key);
+	  const upListener = key.upHandler.bind(key);
+	  
+	  window.addEventListener(
+		"keydown", downListener, false
+	  );
+	  window.addEventListener(
+		"keyup", upListener, false
+	  );
+	  // Detach event listeners
+	  key.unsubscribe = () => {
+		window.removeEventListener("keydown", downListener);
+		window.removeEventListener("keyup", upListener);
+	  };
+	  
+	  return key;
+	}
+</script>
+</body>
+
+
