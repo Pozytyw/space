@@ -22,9 +22,7 @@
 		Sprite = PIXI.Sprite;
 
 //Create a Pixi Application
-	let app = new Application({ 
-		width: 1280, 
-		height: 720,                       
+	let app = new Application(document.body.clientWidth * 0.99, window.innerHeight * 0.97,{                    
 		antialias: true, 
 		transparent: false, 
 		resolution: 1
@@ -160,10 +158,7 @@ function moveObject(object){
 			object.rotation += Math.PI / (180 /object.turnable);
 			object.wasRotation += object.turnable;
 			
-		}
-		if(object.velocity == maxV | object.velocity == maxV * -1){
-		console.log(object.wasRotation + " " +object.direction);
-		}		
+		}	
 		//if object was rotation 90 deg, change direction
 		if(object.wasRotation == 90){
 			object.direction = changeDirection(object.direction, 1)
