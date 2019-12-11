@@ -57,8 +57,8 @@
 		rocket.wasRotation = 0;
 		rocket.rotation = Math.PI / 4;
 		rocket.scale.set(64 / rocket.width, 64 / rocket.height)
-		rocket.pivot.x = 32;
-		rocket.pivot.y = 32;
+		rocket.pivot.x = rocket.width;
+		rocket.pivot.y = rocket.height;
 		rocket.direction = Direction.N;
 		//Create the `blob` sprite 
 		blob = new Sprite(resources["images/blob.png"].texture);
