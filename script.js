@@ -1,11 +1,8 @@
-<!doctype html>
-<meta charset="utf-8">
-<title>Treasure hunter</title>
-<body>
-<script src="pixi/pixi.min.js"></script>
-<script>
 //Create global variables, aliases, enums
 	//Enums
+	let width = 2000;
+	let height = 2000;
+	let mainContainer;
 	const Direction = Object.freeze({
 		'N':0,
 		'E':1,
@@ -14,9 +11,9 @@
 	})
 	
 	//Variables
-	let rocket, state;
+	let rocket, state, blob;
 	var bullets = [];
-	var maxV = 15;
+	var maxV = 10;
 	//Aliases
 	let Application = PIXI.Application,
 		loader = PIXI.loader,
@@ -25,32 +22,40 @@
 
 //Create a Pixi Application
 	let app = new Application({ 
-		width: 1280, 
-		height: 725,                       
+		width: 480, 
+		height: 720,                       
 		antialias: true, 
 		transparent: false, 
 		resolution: 1
 	  }
 	);
-
+	
 	//Add the canvas that Pixi automatically created for you to the HTML document
 	document.body.appendChild(app.view);
 
 	//load an image and run the `setup` function when it's done
 	loader
-	  .add(["images/rocket.png", "images/blob.png", "images/bullet.png"])
+	  .add(["images/rocket.png", "images/blob.png", "images/bullet.png", "images/background.png"])
 	  .load(setup);
 
 	//This `setup` function will run when the image has loaded
 	function setup() {
-	
+		//Create main conteiner
+		mainContainer = new PIXI.Container();
+		app.stage.addChild(mainContainer);
+
+		//Set static size to mainContainer
+		mainContainer.addChild(new PIXI.Sprite(new PIXI.RenderTexture.create(width, height)));
+		mainContainer.addChild(new Sprite(resources["images/background.png"].texture));
+
 		//Create the `rocket` object 
 		rocket = new Sprite(resources["images/rocket.png"].texture);
 		rocket.y = 128; 
 		rocket.x = 128; 
 		rocket.velocity = 0;
 		rocket.wasRotation = 0;
-		rocket.rotation = -Math.PI / 2;
+		rocket.rotation = Math.PI / 4;
+		rocket.scale.set(64 / rocket.width, 64 / rocket.height)
 		rocket.pivot.x = 32;
 		rocket.pivot.y = 32;
 		rocket.direction = Direction.N;
@@ -58,15 +63,14 @@
 		blob = new Sprite(resources["images/blob.png"].texture);
 		blob.x = 400;
 		blob.y = 350;
-		app.stage.addChild(rocket);
-		app.stage.addChild(blob);
+		mainContainer.addChild(rocket);
+		mainContainer.addChild(blob);
 
 		//Capture the keyboard arrow keys
 		let left = keyboard("ArrowLeft"),
 		up = keyboard("ArrowUp"),
 		right = keyboard("ArrowRight"),
-		down = keyboard("ArrowDown"),
-		space = keyboard("+");
+		space = keyboard("s");
 
 		//Left
 		left.press = () => {
@@ -95,13 +99,6 @@
 		space.press = () => {
 			shoot(rocket);
 		};
-		//Down
-		down.press = () => {
-			rocket.velocity = maxV;
-		};
-		down.release = () => {
-			rocket.velocity = 0;
-		};
 
 		//Set the game state
 		state = play;
@@ -117,14 +114,24 @@
 	}
 	//PLAY FUNCTION its main loop function
 	function play(delta) {
+		//move rocket
 		moveObject(rocket);
+		
+		//move all bullets and remove bullets, which out of bounds
 		for(var i = 0; i < bullets.length; i++){
 			moveObject(bullets[i]);
-			if(bullets[i].x > 1280 | bullets[i].x < 0 | bullets[i].y > 725 | bullets[i].y < 0){
-				app.stage.removeChild(bullets[i]);
+			if(hitTestRectangle(blob, bullets[i])){
+				var x = Math.floor(Math.random() * 10000);
+				blob.y = x % (height * 0.98);
+				blob.x = x % (width * 0.98);
+			}
+			if(bullets[i].x > width - maxV | bullets[i].x < maxV | bullets[i].y > height - maxV | bullets[i].y < maxV){
+				mainContainer.removeChild(bullets[i]);
 				bullets.splice(i, 1);
 			}
 		}
+		mainContainer.y = rocket.y * -1 + 360;
+		mainContainer.x = rocket.x * -1 + 240;
 	}
 	
 //The game's helper functions:
@@ -138,19 +145,23 @@ function shoot(shooter){
 		bullet.velocity = -1 * maxV;
 		bullet.direction = shooter.direction;
 		bullets.push(bullet);
-		app.stage.addChild(bullet);
+		mainContainer.addChild(bullet);
 }
 //The 'moveRocket' helper functions
 function moveObject(object){
+		//rotate object by 5deg in left
 		if(object.twist < 0){
 			object.rotation += - Math.PI / 36;
 			object.wasRotation -= 5;
 
+		//rotate object by 5deg in right
 		}else if(object.twist > 0){
 			object.rotation += Math.PI / 36;
 			object.wasRotation += 5;
 			
 		}
+		
+		//if object was rotation 90 deg, change direction
 		if(object.wasRotation == 90){
 			object.direction = changeDirection(object.direction, 1)
 			object.wasRotation = 0;
@@ -161,6 +172,7 @@ function moveObject(object){
 			object.wasRotation = 0;
 			
 		}
+		
 		var vx = 0;
 		var vy = 0;
 		switch(object.direction){
@@ -181,11 +193,12 @@ function moveObject(object){
 				vy = object.velocity * ((object.wasRotation / 5) * 0.0555555555);
 				break;
 		}
-		if(object.x + vx > 0 & object.x + vx < 1280)
+		//move object if doesn't come out of bounds
+		if(object.x + vx > 0 & object.x + vx < width + maxV)
 			object.x += vx;
-		if(object.y + vy > 0 & object.y + vy < 725)
-		object.y += vy;
-
+		if(object.y + vy > 0 & object.y + vy < height + maxV)
+			object.y += vy;
+		
 }
 //The 'changeDirection' helper functions, direction equal +1 = rotation right, -1 left, return current value
 function changeDirection(value, direction) {
@@ -196,6 +209,57 @@ function changeDirection(value, direction) {
 		else
 			return value + direction;
 }
+
+function hitTestRectangle(r1, r2) {
+
+  //Define the variables we'll need to calculate
+  let hit, combinedHalfWidths, combinedHalfHeights, vx, vy;
+
+  //hit will determine whether there's a collision
+  hit = false;
+
+  //Find the center points of each sprite
+  r1.centerX = r1.x + r1.width / 2;
+  r1.centerY = r1.y + r1.height / 2;
+  r2.centerX = r2.x + r2.width / 2;
+  r2.centerY = r2.y + r2.height / 2;
+
+  //Find the half-widths and half-heights of each sprite
+  r1.halfWidth = r1.width / 2;
+  r1.halfHeight = r1.height / 2;
+  r2.halfWidth = r2.width / 2;
+  r2.halfHeight = r2.height / 2;
+
+  //Calculate the distance vector between the sprites
+  vx = r1.centerX - r2.centerX;
+  vy = r1.centerY - r2.centerY;
+
+  //Figure out the combined half-widths and half-heights
+  combinedHalfWidths = r1.halfWidth + r2.halfWidth;
+  combinedHalfHeights = r1.halfHeight + r2.halfHeight;
+
+  //Check for a collision on the x axis
+  if (Math.abs(vx) < combinedHalfWidths) {
+
+    //A collision might be occurring. Check for a collision on the y axis
+    if (Math.abs(vy) < combinedHalfHeights) {
+
+      //There's definitely a collision happening
+      hit = true;
+    } else {
+
+      //There's no collision on the y axis
+      hit = false;
+    }
+  } else {
+
+    //There's no collision on the x axis
+    hit = false;
+  }
+
+  //`hit` will be either `true` or `false`
+  return hit;
+};
 
 //The 'keyboard' helper functions:
 	function keyboard(value) {
@@ -243,7 +307,3 @@ function changeDirection(value, direction) {
 	  
 	  return key;
 	}
-</script>
-</body>
-
-
