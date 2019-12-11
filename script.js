@@ -22,7 +22,7 @@
 
 //Create a Pixi Application
 	let app = new Application({ 
-		width: 480, 
+		width: 1280, 
 		height: 720,                       
 		antialias: true, 
 		transparent: false, 
