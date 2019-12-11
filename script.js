@@ -13,7 +13,7 @@
 	//Variables
 	let rocket, state, blob;
 	var bullets = [];
-	var maxV = 10;
+	var maxV = parseInt(prompt("Podaj maksymalna predkosc"));
 	var maxBulletV = 20;
 	//Aliases
 	let Application = PIXI.Application,
@@ -36,8 +36,8 @@
 
 	//load an image and run the `setup` function when it's done
 	loader
-	  .add(["images/rocket.png", "images/blob.png", "images/bullet.png", "images/background.png"])
-	  .load(setup);
+		.add(["images/rocket.png", "images/blob.png", "images/bullet.png", "images/background.png"])
+		.load(setup);
 
 	//This `setup` function will run when the image has loaded
 	function setup() {
@@ -53,12 +53,11 @@
 		rocket = new Sprite(resources["images/rocket.png"].texture);
 		rocket.y = 128; 
 		rocket.x = 128; 
+		rocket.turnable = parseInt(prompt("Podaj tunrable")); 
 		rocket.velocity = 0;
 		rocket.wasRotation = 0;
-		rocket.rotation = Math.PI / 4;
-		rocket.scale.set(64 / rocket.width, 64 / rocket.height)
-		rocket.pivot.x = rocket.width;
-		rocket.pivot.y = rocket.height;
+		rocket.pivot.x = rocket.width / 2;
+		rocket.pivot.y = rocket.height / 2;
 		rocket.direction = Direction.N;
 		//Create the `blob` sprite 
 		blob = new Sprite(resources["images/blob.png"].texture);
@@ -143,6 +142,7 @@ function shoot(shooter){
 		bullet.x = shooter.x;
 		bullet.y = shooter.y;
 		bullet.wasRotation = shooter.wasRotation;
+		bullet.turnable = shooter.turnable;
 		bullet.rotation = shooter.rotation;
 		bullet.velocity = -1 * maxBulletV;
 		bullet.direction = shooter.direction;
@@ -153,16 +153,17 @@ function shoot(shooter){
 function moveObject(object){
 		//rotate object by 5deg in left
 		if(object.twist < 0){
-			object.rotation += - Math.PI / 36;
-			object.wasRotation -= 5;
+			object.rotation += - Math.PI / (180 /object.turnable);
+			object.wasRotation -= object.turnable;
 
-		//rotate object by 5deg in right
 		}else if(object.twist > 0){
-			object.rotation += Math.PI / 36;
-			object.wasRotation += 5;
+			object.rotation += Math.PI / (180 /object.turnable);
+			object.wasRotation += object.turnable;
 			
 		}
-		
+		if(object.velocity == maxV | object.velocity == maxV * -1){
+		console.log(object.wasRotation + " " +object.direction);
+		}		
 		//if object was rotation 90 deg, change direction
 		if(object.wasRotation == 90){
 			object.direction = changeDirection(object.direction, 1)
@@ -179,20 +180,20 @@ function moveObject(object){
 		var vy = 0;
 		switch(object.direction){
 			case Direction.N:
-				vx = object.velocity * -1 * ((object.wasRotation / 5) * 0.0555555555);
-				vy = object.velocity * (1 - Math.abs((object.wasRotation / 5) * 0.0555555555));
+				vx = object.velocity * -1 * ((object.wasRotation / object.turnable) * (object.turnable * 0.0111111111));
+				vy = object.velocity * (1 - Math.abs((object.wasRotation / object.turnable) * (object.turnable * 0.0111111111)));
 				break;
 			case Direction.E:
-				vx = object.velocity * -1 * (1 - Math.abs((object.wasRotation / 5) * 0.0555555555));
-				vy = object.velocity * -1 * ((object.wasRotation / 5) * 0.0555555555);
+				vx = object.velocity * -1 * (1 - Math.abs((object.wasRotation / object.turnable) * (object.turnable * 0.0111111111)));
+				vy = object.velocity * -1 * ((object.wasRotation / object.turnable) * (object.turnable * 0.0111111111));
 				break;
 			case Direction.S:
-				vx = object.velocity * ((object.wasRotation / 5) * 0.0555555555);
-				vy = object.velocity * -1 * (1 - Math.abs((object.wasRotation / 5) * 0.0555555555));
+				vx = object.velocity * ((object.wasRotation / object.turnable) * (object.turnable * 0.0111111111));
+				vy = object.velocity * -1 * (1 - Math.abs((object.wasRotation / object.turnable) * (object.turnable * 0.0111111111)));
 				break;
 			case Direction.W:
-				vx = object.velocity * (1 - Math.abs((object.wasRotation / 5) * 0.0555555555));
-				vy = object.velocity * ((object.wasRotation / 5) * 0.0555555555);
+				vx = object.velocity * (1 - Math.abs((object.wasRotation / object.turnable) * (object.turnable * 0.0111111111)));
+				vy = object.velocity * ((object.wasRotation / object.turnable) * (object.turnable * 0.0111111111));
 				break;
 		}
 		//move object if doesn't come out of bounds
