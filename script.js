@@ -14,6 +14,7 @@
 	let rocket, state, blob;
 	var bullets = [];
 	var maxV = 10;
+	var maxBulletV = 20;
 	//Aliases
 	let Application = PIXI.Application,
 		loader = PIXI.loader,
@@ -142,7 +143,7 @@ function shoot(shooter){
 		bullet.y = shooter.y;
 		bullet.wasRotation = shooter.wasRotation;
 		bullet.rotation = shooter.rotation;
-		bullet.velocity = -1 * maxV;
+		bullet.velocity = -1 * maxBulletV;
 		bullet.direction = shooter.direction;
 		bullets.push(bullet);
 		mainContainer.addChild(bullet);
