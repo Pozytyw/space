@@ -126,7 +126,8 @@
 				blob.y = x % (height * 0.98);
 				blob.x = x % (width * 0.98);
 			}
-			if(bullets[i].x > width - maxV | bullets[i].x < maxV | bullets[i].y > height - maxV | bullets[i].y < maxV){
+			//destroy bullets when come out of bounds
+			if(bullets[i].x > width - maxBulletV | bullets[i].x < maxBulletV | bullets[i].y > height - maxBulletV | bullets[i].y < maxBulletV){
 				mainContainer.removeChild(bullets[i]);
 				bullets.splice(i, 1);
 			}
