@@ -64,40 +64,6 @@
 		mainContainer.addChild(rocket);
 		mainContainer.addChild(blob);
 
-		//Capture the keyboard arrow keys
-		let left = keyboard("ArrowLeft"),
-		up = keyboard("ArrowUp"),
-		right = keyboard("ArrowRight"),
-		space = keyboard("s");
-
-		//Left
-		left.press = () => {
-			rocket.twist = -1;
-		};
-		left.release = () => {
-			if(rocket.twist == -1)
-				rocket.twist = 0;
-		};
-		//Right
-		right.press = () => {
-			rocket.twist = 1;
-		};
-		right.release = () => {
-			if(rocket.twist == 1)
-				rocket.twist = 0;
-		};
-		//Up
-		up.press = () => {
-			rocket.velocity = -1 * maxV;
-		};
-		up.release = () => {
-			rocket.velocity = 0;
-		};
-		//Space
-		space.press = () => {
-			shoot(rocket);
-		};
-
 		//Set the game state
 		state = play;
 
@@ -106,7 +72,6 @@
 	}
 
 	function gameLoop(delta){
-	  
 	  //update the current game state:
 	  state(delta);
 	}
@@ -115,6 +80,10 @@
 		//move rocket
 		moveObject(rocket);
 		
+		//shoot if is shooting
+		if(rocket.isShooting)
+			shoot(rocket);
+			
 		//move all bullets and remove bullets, which out of bounds
 		for(var i = 0; i < bullets.length; i++){
 			moveObject(bullets[i]);
@@ -132,6 +101,41 @@
 		mainContainer.y = rocket.y * -1 + 360;
 		mainContainer.x = rocket.x * -1 + 240;
 	}
+
+//functions using when detec keydown event
+//Up
+function pressUp(){
+	rocket.velocity = -1 * maxV;
+}
+function releaseUp(){
+	rocket.velocity = 0;
+}
+
+//Right
+function pressRight(){
+	rocket.twist = 1;
+}
+function releaseRight(){
+	if(rocket.twist == 1)
+		rocket.twist = 0;
+}
+
+//Left
+function pressLeft(){
+	rocket.twist = -1;
+}
+function releaseLeft(){
+	if(rocket.twist == -1)
+		rocket.twist = 0;
+}
+
+//Space
+function pressSpace(){
+	rocket.isShooting = true;
+}
+function releaseSpace(){
+	rocket.isShooting = false;
+}
 	
 //The game's helper functions:
 //The 'shoot' helper functions
@@ -147,6 +151,7 @@ function shoot(shooter){
 		bullets.push(bullet);
 		mainContainer.addChild(bullet);
 }
+
 //The 'moveRocket' helper functions
 function moveObject(object){
 		//rotate object by 5deg in left
@@ -198,6 +203,7 @@ function moveObject(object){
 			object.y += vy;
 		
 }
+
 //The 'changeDirection' helper functions, direction equal +1 = rotation right, -1 left, return current value
 function changeDirection(value, direction) {
 	if(direction == -1 & value == 0)
@@ -258,50 +264,3 @@ function hitTestRectangle(r1, r2) {
   //`hit` will be either `true` or `false`
   return hit;
 };
-
-//The 'keyboard' helper functions:
-	function keyboard(value) {
-	  let key = {};
-	  key.value = value;
-	  key.isDown = false;
-	  key.isUp = true;
-	  key.press = undefined;
-	  key.release = undefined;
-	  //The `downHandler`
-	  key.downHandler = event => {
-		if (event.key === key.value) {
-		  if (key.isUp && key.press) key.press();
-		  key.isDown = true;
-		  key.isUp = false;
-		  event.preventDefault();
-		}
-	  };
-
-	  //The `upHandler`
-	  key.upHandler = event => {
-		if (event.key === key.value) {
-		  if (key.isDown && key.release) key.release();
-		  key.isDown = false;
-		  key.isUp = true;
-		  event.preventDefault();
-		}
-	  };
-
-	  //Attach event listeners
-	  const downListener = key.downHandler.bind(key);
-	  const upListener = key.upHandler.bind(key);
-	  
-	  window.addEventListener(
-		"keydown", downListener, false
-	  );
-	  window.addEventListener(
-		"keyup", upListener, false
-	  );
-	  // Detach event listeners
-	  key.unsubscribe = () => {
-		window.removeEventListener("keydown", downListener);
-		window.removeEventListener("keyup", upListener);
-	  };
-	  
-	  return key;
-	}
