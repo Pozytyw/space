@@ -21,7 +21,7 @@ self.onmessage = function (event) {
 
 setTimeout(function() {
 	test();
-}, 10);
+}, 1);
 
 function test(){
 	setTimeout(function() {
@@ -35,10 +35,10 @@ function test(){
 				this.postMessage(["outOfBorder", i]);
 		}
 		test();
-	}, 10);
+	}, 100);
 }
 function isOutOfBorder(object) {
-	if(object.x <= 10 | object.x >= 1990 | object.y <= 10 | object.y >= 1990)
+	if(object.x <= -100 | object.x >= 2100 | object.y <= -100 | object.y >= 2100)
 		return true;
 }
 	

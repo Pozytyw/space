@@ -77,10 +77,10 @@
 		worker.addEventListener("message", function (event) {
 			switch(event.data[0]){
 				case 'collision':
+					var x = false;
 					if(objectsMoveable[event.data[1]].color != objectsMoveable[event.data[2]].color){
-						
 						if(objectsMoveable[event.data[1]].color == "blue" | objectsMoveable[event.data[2]].color == "blue"){
-						createBlob();
+							x = true;
 						}
 						mainContainer.removeChild(objectsMoveable[event.data[1]]);
 						mainContainer.removeChild(objectsMoveable[event.data[2]]);
@@ -88,6 +88,12 @@
 						removeMessage(event.data[2] - 1);
 						objectsMoveable.splice(event.data[1], 1)
 						objectsMoveable.splice(event.data[2] - 1, 1)
+						if(x){
+							for(var i = 0; i < 3; i++){
+								console.log('x');
+								createBlob();
+							}
+						}
 					}
 				break;
 				case 'outOfBorder':
@@ -200,8 +206,10 @@ function createBlob(){
 	blob = new Sprite(resources["images/blob.png"].texture);
 	moveable(blob);
 	blob.color = "blue";
-	blob.x = Math.floor(Math.random() * 10000 % 2000);;
-	blob.y = Math.floor(Math.random() * 10000 % 2000);;
+	do{
+	blob.x = Math.floor(Math.random() * 10000 % 2000);
+	blob.y = Math.floor(Math.random() * 10000 % 2000);
+	}while(hitTestRectangle(blob, rocket));
 	objectsMoveable.push(blob);
 	mainContainer.addChild(blob);
 	addMessage(blob);
@@ -301,9 +309,15 @@ function moveObject(object){
 				break;
 		}
 		//move object if doesn't come out of bounds
+		if(object == rocket){
+		if(object.x + vx > 0 & object.x + vx < width + maxV)
+			object.x += vx;
+		if(object.y + vy > 0 & object.y + vy < height + maxV)
+			object.y += vy;
+		}else{
 			object.x += vx;
 			object.y += vy;
-		
+		}
 		if(object.velocity < 0){
 			moveMessage(object);
 		}
