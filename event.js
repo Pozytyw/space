@@ -1,34 +1,60 @@
 //Listener keyup
 document.addEventListener('keydown', function(event) {
+	if(!event.repeat)
 	switch(event.code){
+		case 'KeyW':
+			pressUp();
+			break;
+		case 'KeyD':
+			pressRight();
+			break;
+		case 'KeyA':
+			pressLeft();
+			break;
+		case 'KeyJ':
+			pressShoot();
+			break;
 		case 'ArrowUp':
-			pressUp()
+			pressUp1();
 			break;
 		case 'ArrowRight':
-			pressRight()
+			pressRight1();
 			break;
 		case 'ArrowLeft':
-			pressLeft()
+			pressLeft1();
 			break;
-		case 'Space':
-			pressSpace()
+		case 'NumpadAdd':
+			pressShoot1();
 			break;
 	}
 });
 //Listener keydown
-document.addEventListener('keyup', function(event) {
+window.addEventListener('keyup', function(event) {
+	if(!event.repeat)
 	switch(event.code){
-		case 'ArrowUp':
+		case 'KeyW':
 			releaseUp();
 			break;
-		case 'ArrowRight':
+		case 'KeyD':
 			releaseRight();
 			break;
-		case 'ArrowLeft':
+		case 'KeyA':
 			releaseLeft();
 			break;
-		case 'Space':
-			releaseSpace()
+		case 'KeyJ':
+			releaseShoot();
+			break;
+		case 'ArrowUp':
+			releaseUp1();
+			break;
+		case 'ArrowRight':
+			releaseRight1();
+			break;
+		case 'ArrowLeft':
+			releaseLeft1();
+			break;
+		case 'NumpadAdd':
+			releaseShoot1();
 			break;
 	}
 });

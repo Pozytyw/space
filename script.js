@@ -1,20 +1,23 @@
-//Create global variables, aliases, enums
+//Create global variables, aliases, enums, workers
 	//Enums
-	let width = 2000;
-	let height = 2000;
-	let mainContainer;
 	const Direction = Object.freeze({
 		'N':0,
 		'E':1,
 		'S':2,
 		'W':3,
 	})
+	//create worker collisions
+	var worker = new Worker("collisions.js");
 	
 	//Variables
+	let width = 2000;
+	let height = 2000;
+	let mainContainer;
 	let rocket, state, blob;
-	var bullets = [];
 	var maxV = parseInt(prompt("Podaj maksymalna predkosc"));
 	var maxBulletV = 20;
+	var objectsMoveable = [];
+	
 	//Aliases
 	let Application = PIXI.Application,
 		loader = PIXI.loader,
@@ -41,29 +44,61 @@
 	function setup() {
 		//Create main conteiner
 		mainContainer = new PIXI.Container();
+		xContainer = new PIXI.Container();
 		app.stage.addChild(mainContainer);
-
+		
 		//Set static size to mainContainer
 		mainContainer.addChild(new PIXI.Sprite(new PIXI.RenderTexture.create(width, height)));
+		
+		//Add background
 		mainContainer.addChild(new Sprite(resources["images/background.png"].texture));
 
 		//Create the `rocket` object 
 		rocket = new Sprite(resources["images/rocket.png"].texture);
-		rocket.y = 128; 
-		rocket.x = 128; 
-		rocket.turnable = parseInt(prompt("Podaj tunrable")); 
-		rocket.velocity = 0;
-		rocket.wasRotation = 0;
-		rocket.pivot.x = rocket.width / 2;
-		rocket.pivot.y = rocket.height / 2;
-		rocket.direction = Direction.N;
-		//Create the `blob` sprite 
-		blob = new Sprite(resources["images/blob.png"].texture);
-		blob.x = 400;
-		blob.y = 350;
+		moveable(rocket);
+		objectsMoveable.push(rocket);
 		mainContainer.addChild(rocket);
-		mainContainer.addChild(blob);
-
+		addMessage(rocket);
+		
+		//Create the `rocket1` object 
+		rocket1 = new Sprite(resources["images/rocket.png"].texture);
+		moveable(rocket1);
+		rocket1.color = "blue";
+		rocket1.x = rocket.x -100;
+		rocket1.y = rocket.y -100;;
+		objectsMoveable.push(rocket1);
+		mainContainer.addChild(rocket1);
+		addMessage(rocket1);
+		
+		
+		//Create the `blob` sprite 
+		createBlob();
+		
+		worker.addEventListener("message", function (event) {
+			switch(event.data[0]){
+				case 'collision':
+					if(objectsMoveable[event.data[1]].color != objectsMoveable[event.data[2]].color){
+						
+						if(objectsMoveable[event.data[1]].color == "blue" | objectsMoveable[event.data[2]].color == "blue"){
+						createBlob();
+						}
+						mainContainer.removeChild(objectsMoveable[event.data[1]]);
+						mainContainer.removeChild(objectsMoveable[event.data[2]]);
+						removeMessage(event.data[1]);
+						removeMessage(event.data[2] - 1);
+						objectsMoveable.splice(event.data[1], 1)
+						objectsMoveable.splice(event.data[2] - 1, 1)
+					}
+				break;
+				case 'outOfBorder':
+					mainContainer.removeChild(objectsMoveable[event.data[1]]);
+					removeMessage(event.data[1]);
+					objectsMoveable.splice(event.data[1], 1)
+				break;
+			}
+			
+		}, false);
+		
 		//Set the game state
 		state = play;
 
@@ -72,37 +107,24 @@
 	}
 
 	function gameLoop(delta){
-	  //update the current game state:
-	  state(delta);
+		//update the current game state:
+		state();
 	}
 	//PLAY FUNCTION its main loop function
-	function play(delta) {
-		//move rocket
-		moveObject(rocket);
+	function play() {
+		//move all moveable
+		objectsMoveable.forEach(object => moveObject(object));
 		
 		//shoot if is shooting
 		if(rocket.isShooting)
 			shoot(rocket);
-			
-		//move all bullets and remove bullets, which out of bounds
-		for(var i = 0; i < bullets.length; i++){
-			moveObject(bullets[i]);
-			if(hitTestRectangle(blob, bullets[i])){
-				var x = Math.floor(Math.random() * 10000);
-				blob.y = x % (height * 0.98);
-				blob.x = x % (width * 0.98);
-			}
-			//destroy bullets when come out of bounds
-			if(bullets[i].x > width - maxBulletV | bullets[i].x < maxBulletV | bullets[i].y > height - maxBulletV | bullets[i].y < maxBulletV){
-				mainContainer.removeChild(bullets[i]);
-				bullets.splice(i, 1);
-			}
-		}
+		if(rocket1.isShooting)
+			shoot(rocket1);
 		mainContainer.y = rocket.y * -1 + 360;
 		mainContainer.x = rocket.x * -1 + 240;
 	}
 
-//functions using when detec keydown event
+//functions using when detec keydown event for player 1
 //Up
 function pressUp(){
 	rocket.velocity = -1 * maxV;
@@ -129,27 +151,109 @@ function releaseLeft(){
 		rocket.twist = 0;
 }
 
-//Space
-function pressSpace(){
+//Shoot
+function pressShoot(){
 	rocket.isShooting = true;
 }
-function releaseSpace(){
+function releaseShoot(){
 	rocket.isShooting = false;
+}
+
+//functions using when detec keydown event for player 2
+//Up
+function pressUp1(){
+	rocket1.velocity = -1 * maxV;
+}
+function releaseUp1(){
+	rocket1.velocity = 0;
+}
+
+//Right
+function pressRight1(){
+	rocket1.twist = 1;
+}
+function releaseRight1(){
+	if(rocket1.twist == 1)
+		rocket1.twist = 0;
+}
+
+//Left
+function pressLeft1(){
+	rocket1.twist = -1;
+}
+function releaseLeft1(){
+	if(rocket1.twist == -1)
+		rocket1.twist = 0;
+}
+
+//Shoot
+function pressShoot1(){
+	rocket1.isShooting = true;
+}
+function releaseShoot1(){
+	rocket1.isShooting = false;
 }
 	
 //The game's helper functions:
+//create blob
+function createBlob(){
+	blob = new Sprite(resources["images/blob.png"].texture);
+	moveable(blob);
+	blob.color = "blue";
+	blob.x = Math.floor(Math.random() * 10000 % 2000);;
+	blob.y = Math.floor(Math.random() * 10000 % 2000);;
+	objectsMoveable.push(blob);
+	mainContainer.addChild(blob);
+	addMessage(blob);
+}
+//Function that create message "add"
+function addMessage(object){
+	let x = [];
+	x.push("add");
+	x.push(new Child(object));
+	worker.postMessage(x);
+}
+//Function that create message "move"
+function moveMessage(object){
+	let x = [];
+	x.push("move");
+	x.push(mainContainer.getChildIndex(object));
+	x.push(new Child(object));
+	worker.postMessage(x);
+}
+//Function that create message "remove"
+function removeMessage(index){
+	let x = [];
+	x.push("remove");
+	x.push(index);
+	worker.postMessage(x);
+}
+//Function that transform object to be moveable
+function moveable(object){
+	object.red = "red"; 
+	object.y = 1200; 
+	object.x = 1200; 
+	object.turnable = 3; 
+	object.velocity = 0;
+	object.wasRotation = 0;
+	object.pivot.x = object.width / 2;
+	object.pivot.y = object.height / 2;
+	object.direction = Direction.N;
+}
 //The 'shoot' helper functions
 function shoot(shooter){
 		bullet = new Sprite(resources["images/bullet.png"].texture);
+		moveable(bullet);
+		bullet.color = shooter.color;
 		bullet.x = shooter.x;
 		bullet.y = shooter.y;
 		bullet.wasRotation = shooter.wasRotation;
-		bullet.turnable = shooter.turnable;
 		bullet.rotation = shooter.rotation;
 		bullet.velocity = -1 * maxBulletV;
 		bullet.direction = shooter.direction;
-		bullets.push(bullet);
 		mainContainer.addChild(bullet);
+		objectsMoveable.push(bullet);
+		addMessage(bullet);
 }
 
 //The 'moveRocket' helper functions
@@ -197,10 +301,12 @@ function moveObject(object){
 				break;
 		}
 		//move object if doesn't come out of bounds
-		if(object.x + vx > 0 & object.x + vx < width + maxV)
 			object.x += vx;
-		if(object.y + vy > 0 & object.y + vy < height + maxV)
 			object.y += vy;
+		
+		if(object.velocity < 0){
+			moveMessage(object);
+		}
 		
 }
 
