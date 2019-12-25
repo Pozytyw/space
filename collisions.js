@@ -16,6 +16,10 @@ self.onmessage = function (event) {
 			var index = event.data[1];
 			container.removeChildren(index);
 			break;
+		case 'ignoreHit':
+			var index = event.data[1];
+			container.children[index].wasHit = false;
+			break;
 	}
 };
 
@@ -27,12 +31,17 @@ function test(){
 	setTimeout(function() {
 		for(var i = 0; i < container.children.length; i++){
 			for(var j = i + 1; j < container.children.length; j++){
-				if(hitTestRectangle(container.children[i], container.children[j])){
-					this.postMessage(["collision", i, j]);
+				if(container.children[i].wasHit == false & container.children[j].wasHit == false){
+					if(hitTestRectangle(container.children[i], container.children[j])){
+						container.children[i].wasHit == true;
+						this.postMessage(["collision", i, j]);
+					}
 				}
 			}
-			if(isOutOfBorder(container.children[i]))
+			if(isOutOfBorder(container.children[i])){
 				this.postMessage(["outOfBorder", i]);
+				container.children[i].wasHit == true;;
+			}
 		}
 		test();
 	}, 100);
@@ -43,7 +52,6 @@ function isOutOfBorder(object) {
 }
 	
 function hitTestRectangle(r1, r2) {
-
   //Define the variables we'll need to calculate
   let hit, combinedHalfWidths, combinedHalfHeights, vx, vy;
 
@@ -51,10 +59,10 @@ function hitTestRectangle(r1, r2) {
   hit = false;
 
   //Find the center points of each sprite
-  r1.centerX = r1.x + r1.width / 2;
-  r1.centerY = r1.y + r1.height / 2;
-  r2.centerX = r2.x + r2.width / 2;
-  r2.centerY = r2.y + r2.height / 2;
+  r1.centerX = r1.x;
+  r1.centerY = r1.y;
+  r2.centerX = r2.x;
+  r2.centerY = r2.y;
 
   //Find the half-widths and half-heights of each sprite
   r1.halfWidth = r1.width / 2;

@@ -14,18 +14,6 @@ document.addEventListener('keydown', function(event) {
 		case 'KeyJ':
 			pressShoot();
 			break;
-		case 'ArrowUp':
-			pressUp1();
-			break;
-		case 'ArrowRight':
-			pressRight1();
-			break;
-		case 'ArrowLeft':
-			pressLeft1();
-			break;
-		case 'NumpadAdd':
-			pressShoot1();
-			break;
 	}
 });
 //Listener keydown
@@ -43,18 +31,6 @@ window.addEventListener('keyup', function(event) {
 			break;
 		case 'KeyJ':
 			releaseShoot();
-			break;
-		case 'ArrowUp':
-			releaseUp1();
-			break;
-		case 'ArrowRight':
-			releaseRight1();
-			break;
-		case 'ArrowLeft':
-			releaseLeft1();
-			break;
-		case 'NumpadAdd':
-			releaseShoot1();
 			break;
 	}
 });

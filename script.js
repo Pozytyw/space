@@ -14,7 +14,7 @@
 	let height = 2000;
 	let mainContainer;
 	let rocket, state, blob;
-	var maxV = parseInt(prompt("Podaj maksymalna predkosc"));
+	var maxV = 20;
 	var maxBulletV = 20;
 	var objectsMoveable = [];
 	
@@ -60,40 +60,25 @@
 		mainContainer.addChild(rocket);
 		addMessage(rocket);
 		
-		//Create the `rocket1` object 
-		rocket1 = new Sprite(resources["images/rocket.png"].texture);
-		moveable(rocket1);
-		rocket1.color = "blue";
-		rocket1.x = rocket.x -100;
-		rocket1.y = rocket.y -100;;
-		objectsMoveable.push(rocket1);
-		mainContainer.addChild(rocket1);
-		addMessage(rocket1);
-		
-		
 		//Create the `blob` sprite 
 		createBlob();
 		
 		worker.addEventListener("message", function (event) {
 			switch(event.data[0]){
 				case 'collision':
-					var x = false;
 					if(objectsMoveable[event.data[1]].color != objectsMoveable[event.data[2]].color){
-						if(objectsMoveable[event.data[1]].color == "blue" | objectsMoveable[event.data[2]].color == "blue"){
-							x = true;
-						}
-						mainContainer.removeChild(objectsMoveable[event.data[1]]);
-						mainContainer.removeChild(objectsMoveable[event.data[2]]);
-						removeMessage(event.data[1]);
-						removeMessage(event.data[2] - 1);
-						objectsMoveable.splice(event.data[1], 1)
-						objectsMoveable.splice(event.data[2] - 1, 1)
-						if(x){
-							for(var i = 0; i < 3; i++){
-								console.log('x');
-								createBlob();
-							}
-						}
+						//mainContainer.removeChild(objectsMoveable[event.data[2]]);
+						//mainContainer.removeChild(objectsMoveable[event.data[1]]);
+						
+						//removeMessage(event.data[2]);
+						//removeMessage(event.data[1]);
+						//objectsMoveable.splice(event.data[2], 1)
+						//objectsMoveable.splice(event.data[1], 1)
+						objectsMoveable[event.data[1]].velocity = 0;
+						objectsMoveable[event.data[2]].velocity = 0;
+					}else{
+						ignoreHitMessage(event.data[1]);
+						ignoreHitMessage(event.data[2]);
 					}
 				break;
 				case 'outOfBorder':
@@ -124,8 +109,6 @@
 		//shoot if is shooting
 		if(rocket.isShooting)
 			shoot(rocket);
-		if(rocket1.isShooting)
-			shoot(rocket1);
 		mainContainer.y = rocket.y * -1 + 360;
 		mainContainer.x = rocket.x * -1 + 240;
 	}
@@ -164,41 +147,6 @@ function pressShoot(){
 function releaseShoot(){
 	rocket.isShooting = false;
 }
-
-//functions using when detec keydown event for player 2
-//Up
-function pressUp1(){
-	rocket1.velocity = -1 * maxV;
-}
-function releaseUp1(){
-	rocket1.velocity = 0;
-}
-
-//Right
-function pressRight1(){
-	rocket1.twist = 1;
-}
-function releaseRight1(){
-	if(rocket1.twist == 1)
-		rocket1.twist = 0;
-}
-
-//Left
-function pressLeft1(){
-	rocket1.twist = -1;
-}
-function releaseLeft1(){
-	if(rocket1.twist == -1)
-		rocket1.twist = 0;
-}
-
-//Shoot
-function pressShoot1(){
-	rocket1.isShooting = true;
-}
-function releaseShoot1(){
-	rocket1.isShooting = false;
-}
 	
 //The game's helper functions:
 //create blob
@@ -236,6 +184,13 @@ function removeMessage(index){
 	x.push(index);
 	worker.postMessage(x);
 }
+//Function that create message "remove"
+function ignoreHitMessage(index){
+	let x = [];
+	x.push("ignoreHit");
+	x.push(index);
+	worker.postMessage(x);
+}
 //Function that transform object to be moveable
 function moveable(object){
 	object.red = "red"; 
@@ -252,7 +207,6 @@ function moveable(object){
 function shoot(shooter){
 		bullet = new Sprite(resources["images/bullet.png"].texture);
 		moveable(bullet);
-		bullet.color = shooter.color;
 		bullet.x = shooter.x;
 		bullet.y = shooter.y;
 		bullet.wasRotation = shooter.wasRotation;

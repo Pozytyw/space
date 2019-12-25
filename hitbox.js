@@ -19,6 +19,7 @@ class Child {
 		this.y = object.y;
 		this.width = object.width;
 		this.height = object.height;
+		this.wasHit = false;
 		this.color = object.color;
 	}
 }
