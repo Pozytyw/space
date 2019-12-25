@@ -60,22 +60,23 @@
 		mainContainer.addChild(rocket);
 		addMessage(rocket);
 		
-		//Create the `blob` sprite 
-		createBlob();
+		//Create the `blobs`
+		for(var i = 0; i < 10; i++){
+			createBlob();
+		}
+		
 		
 		worker.addEventListener("message", function (event) {
 			switch(event.data[0]){
 				case 'collision':
 					if(objectsMoveable[event.data[1]].color != objectsMoveable[event.data[2]].color){
-						//mainContainer.removeChild(objectsMoveable[event.data[2]]);
-						//mainContainer.removeChild(objectsMoveable[event.data[1]]);
+						mainContainer.removeChild(objectsMoveable[event.data[2]]);
+						mainContainer.removeChild(objectsMoveable[event.data[1]]);
 						
-						//removeMessage(event.data[2]);
-						//removeMessage(event.data[1]);
-						//objectsMoveable.splice(event.data[2], 1)
-						//objectsMoveable.splice(event.data[1], 1)
-						objectsMoveable[event.data[1]].velocity = 0;
-						objectsMoveable[event.data[2]].velocity = 0;
+						removeMessage(event.data[2]);
+						removeMessage(event.data[1]);
+						objectsMoveable.splice(event.data[2], 1)
+						objectsMoveable.splice(event.data[1], 1)
 					}else{
 						ignoreHitMessage(event.data[1]);
 						ignoreHitMessage(event.data[2]);
@@ -193,7 +194,7 @@ function ignoreHitMessage(index){
 }
 //Function that transform object to be moveable
 function moveable(object){
-	object.red = "red"; 
+	object.color = "red"; 
 	object.y = 1200; 
 	object.x = 1200; 
 	object.turnable = 3; 

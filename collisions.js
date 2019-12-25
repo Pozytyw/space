@@ -30,17 +30,18 @@ setTimeout(function() {
 function test(){
 	setTimeout(function() {
 		for(var i = 0; i < container.children.length; i++){
-			for(var j = i + 1; j < container.children.length; j++){
-				if(container.children[i].wasHit == false & container.children[j].wasHit == false){
-					if(hitTestRectangle(container.children[i], container.children[j])){
-						container.children[i].wasHit == true;
-						this.postMessage(["collision", i, j]);
-					}
-				}
-			}
 			if(isOutOfBorder(container.children[i])){
 				this.postMessage(["outOfBorder", i]);
 				container.children[i].wasHit == true;;
+			}else{
+				for(var j = i + 1; j < container.children.length; j++){
+					if(container.children[i].wasHit == false & container.children[j].wasHit == false){
+						if(hitTestRectangle(container.children[i], container.children[j])){
+							container.children[i].wasHit == true;
+							this.postMessage(["collision", i, j]);
+						}
+					}
+				}
 			}
 		}
 		test();
