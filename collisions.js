@@ -8,17 +8,16 @@ self.onmessage = function (event) {
 			container.addChildren(event.data[1]);
 			break;
 		case 'move':
-			var index = event.data[1] - 2;
-			container.children[index].x = event.data[2].x;
-			container.children[index].y = event.data[2].y;
+			var child = container.getByUID(event.data[1].uID)
+			child.x = event.data[1].x;
+			child.y = event.data[1].y;
 			break;
 		case 'remove':
-			var index = event.data[1];
-			container.removeChildren(index);
+			container.removeChildren(event.data[1]);
 			break;
 		case 'ignoreHit':
-			var index = event.data[1];
-			container.children[index].wasHit = false;
+			var child = container.getByUID(event.data[1].uID)
+			child.wasHit = false;
 			break;
 	}
 };
@@ -31,21 +30,21 @@ function test(){
 	setTimeout(function() {
 		for(var i = 0; i < container.children.length; i++){
 			if(isOutOfBorder(container.children[i])){
-				this.postMessage(["outOfBorder", i]);
+				this.postMessage(["outOfBorder", container.children[i].uID]);
 				container.children[i].wasHit == true;;
 			}else{
 				for(var j = i + 1; j < container.children.length; j++){
 					if(container.children[i].wasHit == false & container.children[j].wasHit == false){
 						if(hitTestRectangle(container.children[i], container.children[j])){
 							container.children[i].wasHit == true;
-							this.postMessage(["collision", i, j]);
+							this.postMessage(["collision", container.children[i].uID, container.children[j].uID]);
 						}
 					}
 				}
 			}
 		}
 		test();
-	}, 100);
+	}, 10);
 }
 function isOutOfBorder(object) {
 	if(object.x <= -100 | object.x >= 2100 | object.y <= -100 | object.y >= 2100)

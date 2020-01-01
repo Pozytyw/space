@@ -12,11 +12,12 @@
 	//Variables
 	let width = 2000;
 	let height = 2000;
+	let uID = 0;
 	let mainContainer;
 	let rocket, state, blob;
 	var maxV = 20;
-	var maxBulletV = 20;
-	var objectsMoveable = [];
+	var maxBulletV = maxV * 2;
+	var objectsMoveable = new Container();
 	
 	//Aliases
 	let Application = PIXI.Application,
@@ -56,7 +57,10 @@
 		//Create the `rocket` object 
 		rocket = new Sprite(resources["images/rocket.png"].texture);
 		moveable(rocket);
-		objectsMoveable.push(rocket);
+		//add accelerate variable to rocket
+		rocket.accelerate = false;
+		
+		objectsMoveable.addChildren(rocket);
 		mainContainer.addChild(rocket);
 		addMessage(rocket);
 		
@@ -69,23 +73,30 @@
 		worker.addEventListener("message", function (event) {
 			switch(event.data[0]){
 				case 'collision':
-					if(objectsMoveable[event.data[1]].color != objectsMoveable[event.data[2]].color){
-						mainContainer.removeChild(objectsMoveable[event.data[2]]);
-						mainContainer.removeChild(objectsMoveable[event.data[1]]);
+					let collisionChild1 = objectsMoveable.getByUID(event.data[1]);
+					let collisionChild2 = objectsMoveable.getByUID(event.data[2]);
+					if(typeof collisionChild1 != "undefined" & typeof collisionChild2 != "undefined")
+					if(collisionChild1.color != collisionChild2.color){
+						mainContainer.removeChild(collisionChild1);
+						mainContainer.removeChild(collisionChild2);
 						
-						removeMessage(event.data[2]);
-						removeMessage(event.data[1]);
-						objectsMoveable.splice(event.data[2], 1)
-						objectsMoveable.splice(event.data[1], 1)
+						removeMessage(collisionChild1);
+						removeMessage(collisionChild2);
+
+						objectsMoveable.removeChildren(collisionChild1)
+						objectsMoveable.removeChildren(collisionChild2)
 					}else{
-						ignoreHitMessage(event.data[1]);
-						ignoreHitMessage(event.data[2]);
+						ignoreHitMessage(collisionChild1);
+						ignoreHitMessage(collisionChild2);
 					}
 				break;
 				case 'outOfBorder':
-					mainContainer.removeChild(objectsMoveable[event.data[1]]);
-					removeMessage(event.data[1]);
-					objectsMoveable.splice(event.data[1], 1)
+					let child = objectsMoveable.getByUID(event.data[1]);
+					mainContainer.removeChild(child);
+					
+					removeMessage(child);
+					
+					objectsMoveable.removeChildren(child)
 				break;
 			}
 			
@@ -105,11 +116,8 @@
 	//PLAY FUNCTION its main loop function
 	function play() {
 		//move all moveable
-		objectsMoveable.forEach(object => moveObject(object));
+		objectsMoveable.children.forEach(object => moveObject(object));
 		
-		//shoot if is shooting
-		if(rocket.isShooting)
-			shoot(rocket);
 		mainContainer.y = rocket.y * -1 + 360;
 		mainContainer.x = rocket.x * -1 + 240;
 	}
@@ -117,10 +125,12 @@
 //functions using when detec keydown event for player 1
 //Up
 function pressUp(){
-	rocket.velocity = -1 * maxV;
+	rocket.accelerate = true;
+	doAccelerate(rocket);
 }
 function releaseUp(){
-	rocket.velocity = 0;
+	rocket.accelerate = false;
+	doDeaccelerate(rocket);
 }
 
 //Right
@@ -143,7 +153,8 @@ function releaseLeft(){
 
 //Shoot
 function pressShoot(){
-	rocket.isShooting = true;
+	rocket.isShooting = true;	
+	shoot(rocket);
 }
 function releaseShoot(){
 	rocket.isShooting = false;
@@ -159,7 +170,7 @@ function createBlob(){
 	blob.x = Math.floor(Math.random() * 10000 % 2000);
 	blob.y = Math.floor(Math.random() * 10000 % 2000);
 	}while(hitTestRectangle(blob, rocket));
-	objectsMoveable.push(blob);
+	objectsMoveable.addChildren(blob);
 	mainContainer.addChild(blob);
 	addMessage(blob);
 }
@@ -174,27 +185,27 @@ function addMessage(object){
 function moveMessage(object){
 	let x = [];
 	x.push("move");
-	x.push(mainContainer.getChildIndex(object));
 	x.push(new Child(object));
 	worker.postMessage(x);
 }
 //Function that create message "remove"
-function removeMessage(index){
+function removeMessage(object){
 	let x = [];
 	x.push("remove");
-	x.push(index);
+	x.push(new Child(object));
 	worker.postMessage(x);
 }
 //Function that create message "remove"
-function ignoreHitMessage(index){
+function ignoreHitMessage(child){
 	let x = [];
 	x.push("ignoreHit");
-	x.push(index);
+	x.push(new Child(child));
 	worker.postMessage(x);
 }
 //Function that transform object to be moveable
 function moveable(object){
 	object.color = "red"; 
+	object.uID = getUID(); 
 	object.y = 1200; 
 	object.x = 1200; 
 	object.turnable = 3; 
@@ -204,6 +215,30 @@ function moveable(object){
 	object.pivot.y = object.height / 2;
 	object.direction = Direction.N;
 }
+//Accelerate function
+function doAccelerate(object){
+	object.velocity -= 1;
+	
+	console.log(object.velocity);
+	
+	if(object.accelerate & object.velocity - 1 >= maxV * -1){
+		setTimeout(function() {
+			doAccelerate(object)
+		}, 50);
+	}
+}
+//Accelerate function
+function doDeaccelerate(object){
+	object.velocity += 1;
+	
+	console.log(object.velocity);
+	if(object.accelerate == false & object.velocity != 0){
+		setTimeout(function() {
+			doDeaccelerate(object)
+		}, 25);
+	}
+}
+
 //The 'shoot' helper functions
 function shoot(shooter){
 		bullet = new Sprite(resources["images/bullet.png"].texture);
@@ -215,8 +250,14 @@ function shoot(shooter){
 		bullet.velocity = -1 * maxBulletV;
 		bullet.direction = shooter.direction;
 		mainContainer.addChild(bullet);
-		objectsMoveable.push(bullet);
+		objectsMoveable.addChildren(bullet);
 		addMessage(bullet);
+		
+		if(shooter.isShooting){
+		setTimeout(function() {
+			shoot(shooter);
+		}, 1000);
+	}
 }
 
 //The 'moveRocket' helper functions
@@ -339,3 +380,7 @@ function hitTestRectangle(r1, r2) {
   //`hit` will be either `true` or `false`
   return hit;
 };
+function getUID(){
+	uID += 1;
+	return uID;
+}

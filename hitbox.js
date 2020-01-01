@@ -8,8 +8,19 @@ class Container {
 		this.children.push(child);
 	}
 	
-	removeChildren(index) {
-		this.children.splice(index, 1);
+	removeChildren(object) {
+		for(var i = 0; i < this.children.length; i++){
+			if(object.uID == this.children[i].uID){
+				this.children.splice(i, 1);
+			}
+		}
+	}
+	getByUID(uID){
+		for (const child of this.children) {
+			if(child.uID == uID){
+				return child;
+			}
+		}
 	}
 }
 
@@ -21,5 +32,6 @@ class Child {
 		this.height = object.height;
 		this.wasHit = false;
 		this.color = object.color;
+		this.uID = object.uID;
 	}
 }
