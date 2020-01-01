@@ -85,6 +85,9 @@
 
 						objectsMoveable.removeChildren(collisionChild1)
 						objectsMoveable.removeChildren(collisionChild2)
+						if(collisionChild1 == rocket | collisionChild2 == rocket){
+							respown(rocket);
+						}
 					}else{
 						ignoreHitMessage(collisionChild1);
 						ignoreHitMessage(collisionChild2);
@@ -241,17 +244,19 @@ function doDeaccelerate(object){
 
 //The 'shoot' helper functions
 function shoot(shooter){
-		bullet = new Sprite(resources["images/bullet.png"].texture);
-		moveable(bullet);
-		bullet.x = shooter.x;
-		bullet.y = shooter.y;
-		bullet.wasRotation = shooter.wasRotation;
-		bullet.rotation = shooter.rotation;
-		bullet.velocity = -1 * maxBulletV;
-		bullet.direction = shooter.direction;
-		mainContainer.addChild(bullet);
-		objectsMoveable.addChildren(bullet);
-		addMessage(bullet);
+		if(shooter.isShooting){
+			bullet = new Sprite(resources["images/bullet.png"].texture);
+			moveable(bullet);
+			bullet.x = shooter.x;
+			bullet.y = shooter.y;
+			bullet.wasRotation = shooter.wasRotation;
+			bullet.rotation = shooter.rotation;
+			bullet.velocity = -1 * maxBulletV;
+			bullet.direction = shooter.direction;
+			mainContainer.addChild(bullet);
+			objectsMoveable.addChildren(bullet);
+			addMessage(bullet);
+		}
 		
 		if(shooter.isShooting){
 		setTimeout(function() {
@@ -318,6 +323,18 @@ function moveObject(object){
 			moveMessage(object);
 		}
 		
+}
+
+function respown(object){
+		rocket.accelerate = false;
+		
+		rocket.x = 300;
+		rocket.y = 300;
+		
+		
+		objectsMoveable.addChildren(rocket);
+		mainContainer.addChild(rocket);
+		addMessage(rocket);
 }
 
 //The 'changeDirection' helper functions, direction equal +1 = rotation right, -1 left, return current value
